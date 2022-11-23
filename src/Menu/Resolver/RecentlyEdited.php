@@ -164,11 +164,18 @@ final class RecentlyEdited
     private function getRecords($contentTypeKey, $limit)
     {
         $repo = $this->em->getRepository($contentTypeKey);
+        // Make search MUCH faster by limiting scope
+        $now = new \DateTime();
+        $interval = new \DateInterval("P30D");
+        $now->sub($interval);
+        $nowString = $now->format('Y-m-d H:i:s');
+
         $qb = $repo
             ->createQueryBuilder()
             ->setMaxResults($limit)
-            ->orderBy('datechanged', 'DESC')
-        ;
+            ->where('datechanged > :date')
+            ->setParameter('date', $nowString)
+            ->orderBy('datechanged', 'DESC');
 
         return $repo->findWith($qb);
     }
